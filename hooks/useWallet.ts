@@ -36,27 +36,19 @@ export const useWallet = () => {
     if (!user) return;
     
     try {
-      const response = await apiService.getBalance(user.id);
-      if (response.success) {
-        setBalance(response.data);
-      }
+      const balanceData = await apiService.getBalance(user.id);
+      setBalance(balanceData);
     } catch (error) {
       console.error('Failed to load balance:', error);
     }
   };
 
-  const loadTransactions = async (page = 1, limit = 20) => {
+  const loadTransactions = async () => {
     if (!user) return;
     
     try {
-      const response = await apiService.getTransactions(user.id, page, limit);
-      if (response.success) {
-        if (page === 1) {
-          setTransactions(response.data.transactions);
-        } else {
-          setTransactions(prev => [...prev, ...response.data.transactions]);
-        }
-      }
+      const response = await apiService.getTransactions(user.id);
+      setTransactions(response.transactions || []);
     } catch (error) {
       console.error('Failed to load transactions:', error);
     }
@@ -68,82 +60,70 @@ export const useWallet = () => {
     setIsRefreshing(false);
   };
 
-  const sendMoney = async (toUserId: string, amount: number, description?: string) => {
+  const sendMoney = async (recipient: string, amount: number, notes?: string) => {
     if (!user) throw new Error('User not authenticated');
     
     try {
-      const response = await apiService.transfer(user.id, {
-        toUserId,
-        amount,
-        currency: 'LZAR',
-        description,
+      const result = await apiService.transfer(user.id, {
+        transactionAmount: amount,
+        transactionRecipient: recipient,
+        transactionNotes: notes,
       });
       
-      if (response.success) {
-        await refreshWallet();
-        return response.data;
-      }
-      throw new Error(response.error || 'Transfer failed');
+      await refreshWallet();
+      return result;
     } catch (error) {
       console.error('Send money failed:', error);
       throw error;
     }
   };
 
-  const createPaymentRequest = async (amount: number, description?: string) => {
+  const createPaymentRequest = async (paymentId: string, amount: number, note?: string) => {
     if (!user) throw new Error('User not authenticated');
     
     try {
-      const response = await apiService.createCharge(user.id, {
+      const result = await apiService.createCharge(user.id, {
+        paymentId,
         amount,
-        currency: 'LZAR',
-        description,
+        note,
       });
       
-      if (response.success) {
-        return response.data;
-      }
-      throw new Error(response.error || 'Failed to create payment request');
+      return result;
     } catch (error) {
       console.error('Create payment request failed:', error);
       throw error;
     }
   };
 
-  const mintTokens = async (amount: number, bankAccountId: string) => {
+  const mintTokens = async (amount: number, recipient?: string, notes?: string) => {
     if (!user) throw new Error('User not authenticated');
     
     try {
-      const response = await apiService.mintTokens(user.id, {
-        amount,
-        bankAccountId,
+      const result = await apiService.mintTokens({
+        transactionAmount: amount,
+        transactionRecipient: recipient,
+        transactionNotes: notes,
       });
       
-      if (response.success) {
-        await refreshWallet();
-        return response.data;
-      }
-      throw new Error(response.error || 'Mint failed');
+      await refreshWallet();
+      return result;
     } catch (error) {
       console.error('Mint tokens failed:', error);
       throw error;
     }
   };
 
-  const redeemTokens = async (amount: number, bankAccountId: string) => {
+  const redeemTokens = async (amount: number) => {
     if (!user) throw new Error('User not authenticated');
     
     try {
-      const response = await apiService.redeemTokens(user.id, {
+      const result = await apiService.redeemTokens({
+        userId: user.id,
         amount,
-        bankAccountId,
       });
       
-      if (response.success) {
-        await refreshWallet();
-        return response.data;
-      }
-      throw new Error(response.error || 'Redeem failed');
+      await refreshWallet();
+      return result;
     } catch (error) {
       console.error('Redeem tokens failed:', error);
       throw error;
@@ -161,6 +141,5 @@ export const useWallet = () => {
     createPaymentRequest,
     mintTokens,
     redeemTokens,
-    loadTransactions,
   };
 };

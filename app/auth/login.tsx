@@ -40,10 +40,10 @@ export default function LoginScreen() {
       if (success) {
         router.replace('/(tabs)');
       } else {
-        Alert.alert('Login Failed', 'Invalid email or password. Please try again.');
+        Alert.alert('Login Failed', 'Unable to authenticate. Please check your credentials and try again.');
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred during login. Please try again.');
+      Alert.alert('Error', `Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

@@ -1,20 +1,14 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiService } from '@/services/api';
-import { User, AuthToken } from '@/types/api';
+import { User, CreateUserRequest } from '@/types/api';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (userData: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-  }) => Promise<boolean>;
+  register: (userData: CreateUserRequest) => Promise<{ success: boolean; user?: User }>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
 }
@@ -43,12 +37,8 @@ export const useAuthProvider = () => {
       const userId = await AsyncStorage.getItem('user_id');
       
       if (token && userId) {
-        const response = await apiService.getProfile(userId);
-        if (response.success) {
-          setUser(response.data);
-        } else {
-          await logout();
-        }
+        const user = await apiService.getProfile(userId);
+        setUser(user);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -61,16 +51,11 @@ export const useAuthProvider = () => {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await apiService.login(email, password);
+      const { user, token } = await apiService.login(email, password);
       
-      if (response.success) {
-        // Get user profile after successful login
-        const userResponse = await apiService.getProfile('me'); // Assuming 'me' endpoint
-        if (userResponse.success) {
-          setUser(userResponse.data);
-          await AsyncStorage.setItem('user_id', userResponse.data.id);
-          return true;
-        }
+      if (user && token) {
+        setUser(user);
+        return true;
       }
       return false;
     } catch (error) {
@@ -81,25 +66,20 @@ export const useAuthProvider = () => {
     }
   };
 
-  const register = async (userData: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-  }): Promise<boolean> => {
+  const register = async (userData: CreateUserRequest): Promise<{ success: boolean; user?: User }> => {
     try {
       setIsLoading(true);
-      const response = await apiService.register(userData);
+      const user = await apiService.register(userData);
       
-      if (response.success) {
-        // Auto-login after registration
-        return await login(userData.email, userData.password);
+      if (user) {
+        // Store user ID for potential future login
+        await AsyncStorage.setItem('user_id', user.id);
+        return { success: true, user };
       }
-      return false;
+      return { success: false };
     } catch (error) {
       console.error('Registration failed:', error);
-      return false;
+      return { success: false };
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +88,6 @@ export const useAuthProvider = () => {
   const logout = async () => {
     try {
       await apiService.logout();
-      await AsyncStorage.removeItem('user_id');
       setUser(null);
     } catch (error) {
       console.error('Logout failed:', error);

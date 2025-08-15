@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Mail, Lock, User, Phone } from 'lucide-react-native';
+import { Mail, User } from 'lucide-react-native';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,9 +13,6 @@ export default function RegisterScreen() {
     firstName: '',
     lastName: '',
     email: '',
-    phoneNumber: '',
-    password: '',
-    confirmPassword: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -37,24 +34,6 @@ export default function RegisterScreen() {
       newErrors.email = 'Please enter a valid email';
     }
 
-    if (!formData.phoneNumber) {
-      newErrors.phoneNumber = 'Phone number is required';
-    } else if (!/^(\+27|0)[0-9]{9}$/.test(formData.phoneNumber.replace(/\s/g, ''))) {
-      newErrors.phoneNumber = 'Please enter a valid South African phone number';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = 'Password must contain uppercase, lowercase, and number';
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
     if (!acceptedTerms) {
       newErrors.terms = 'You must accept the terms and conditions';
     }
@@ -67,22 +46,20 @@ export default function RegisterScreen() {
     if (!validateForm()) return;
 
     try {
-      const success = await register({
+      const result = await register({
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.toLowerCase().trim(),
-        phoneNumber: formData.phoneNumber.replace(/\s/g, ''),
-        password: formData.password,
       });
 
-      if (success) {
+      if (result.success) {
         Alert.alert(
           'Registration Successful',
-          'Your account has been created successfully!',
-          [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+          'Your account has been created successfully! You can now sign in.',
+          [{ text: 'OK', onPress: () => router.push('/auth/login') }]
         );
       } else {
-        Alert.alert('Registration Fail', 'Unable to create account. Please try again.');
+        Alert.alert('Registration Failed', 'Unable to create account. Please try again.');
       }
     } catch (error) {
       Alert.alert('Error', 'An error occurred during registration. Please try again.');
@@ -141,36 +118,6 @@ export default function RegisterScreen() {
             autoCapitalize="none"
             leftIcon={<Mail size={20} color="#9CA3AF" />}
             error={errors.email}
-          />
-
-          <Input
-            label="Phone Number"
-            placeholder="+27 XX XXX XXXX"
-            value={formData.phoneNumber}
-            onChangeText={(value) => updateFormData('phoneNumber', value)}
-            keyboardType="phone-pad"
-            leftIcon={<Phone size={20} color="#9CA3AF" />}
-            error={errors.phoneNumber}
-          />
-
-          <Input
-            label="Password"
-            placeholder="Create a password"
-            value={formData.password}
-            onChangeText={(value) => updateFormData('password', value)}
-            isPassword
-            leftIcon={<Lock size={20} color="#9CA3AF" />}
-            error={errors.password}
-          />
-
-          <Input
-            label="Confirm Password"
-            placeholder="Confirm your password"
-            value={formData.confirmPassword}
-            onChangeText={(value) => updateFormData('confirmPassword', value)}
-            isPassword
-            leftIcon={<Lock size={20} color="#9CA3AF" />}
-            error={errors.confirmPassword}
           />
 
           <TouchableOpacity

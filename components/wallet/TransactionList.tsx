@@ -69,19 +69,23 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   };
 
   const getTransactionTitle = (transaction: Transaction) => {
-    switch (transaction.type) {
-      case 'transfer':
-        return transaction.fromUserId ? 'Received' : 'Sent';
+    switch (transaction.txType) {
+      case 'TRANSFER':
+        return 'Transfer';
       case 'mint':
+      case 'MINT':
         return 'Top Up';
       case 'redeem':
+      case 'REDEEM':
         return 'Withdrawal';
       case 'charge':
+      case 'CHARGE':
         return 'Payment Request';
       case 'reward':
+      case 'REWARD':
         return 'Reward';
       default:
-        return 'Transaction';
+        return transaction.txType || 'Transaction';
     }
   };
 
@@ -89,16 +93,11 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     if (transaction.status === 'failed' || transaction.status === 'cancelled') {
       return '#9CA3AF';
     }
-    return transaction.type === 'transfer' && transaction.fromUserId 
-      ? '#10B981' 
-      : '#F3F4F6';
+    return transaction.txType === 'TRANSFER' ? '#10B981' : '#F3F4F6';
   };
 
   const getAmountPrefix = (transaction: Transaction) => {
-    if (transaction.type === 'transfer' && transaction.fromUserId) {
-      return '+';
-    }
-    return transaction.type === 'mint' || transaction.type === 'reward' ? '+' : '-';
+    return transaction.txType === 'MINT' || transaction.txType === 'REWARD' ? '+' : '';
   };
 
   const renderTransaction = ({ item }: { item: Transaction }) => (
@@ -121,7 +120,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
       
       <View style={styles.transactionAmount}>
         <Text style={[styles.amount, { color: getAmountColor(item) }]}>
-          {getAmountPrefix(item)}{formatCurrency(item.amount, item.currency)}
+          {getAmountPrefix(item)}{formatCurrency(item.value, item.currency)}
         </Text>
         <Text style={styles.status}>{item.status}</Text>
       </View>

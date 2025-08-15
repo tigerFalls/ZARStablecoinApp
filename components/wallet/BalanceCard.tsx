@@ -31,6 +31,17 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
     return `${amount.toFixed(2)} LZAR`;
   };
 
+  const getLZARBalance = () => {
+    if (!balance?.tokens) return 0;
+    const lzarToken = balance.tokens.find(token => token.name === 'LZAR');
+    return parseFloat(lzarToken?.balance || '0');
+  };
+
+  const getZARBalance = () => {
+    // Assuming 1:1 ratio between LZAR and ZAR
+    return getLZARBalance();
+  };
+
   return (
     <Card gradient gradientColors={['#6366F1', '#8B5CF6', '#EC4899']}>
       <View style={styles.header}>
@@ -39,7 +50,7 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
           <View style={styles.balanceContainer}>
             <Text style={styles.balance}>
               {isBalanceVisible 
-                ? formatLZAR(balance?.lzarBalance || 0)
+                ? formatLZAR(getLZARBalance())
                 : '••••••'
               }
             </Text>
@@ -62,16 +73,16 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
           <Text style={styles.subBalanceLabel}>ZAR Equivalent</Text>
           <Text style={styles.subBalanceValue}>
             {isBalanceVisible 
-              ? formatCurrency(balance?.zarBalance || 0)
+              ? formatCurrency(getZARBalance())
               : '••••••'
             }
           </Text>
         </View>
         <View style={styles.subBalance}>
-          <Text style={styles.subBalanceLabel}>Locked</Text>
+          <Text style={styles.subBalanceLabel}>Available</Text>
           <Text style={styles.subBalanceValue}>
             {isBalanceVisible 
-              ? formatLZAR(balance?.lockedBalance || 0)
+              ? formatLZAR(getLZARBalance())
               : '••••••'
             }
           </Text>

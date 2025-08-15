@@ -3,74 +3,71 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  phoneNumber: string;
-  profileImage?: string;
-  kycStatus: 'pending' | 'verified' | 'rejected';
-  faceIdEnabled: boolean;
+  imageUrl?: string;
+  enabledPay?: boolean;
+  role: 'ADMIN' | 'MEMBER' | 'CUSTOMER';
+  publicKey?: string;
+  paymentIdentifier?: string;
+  businessId?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface AuthToken {
   token: string;
-  refreshToken: string;
-  expiresAt: string;
+  userId: string;
 }
 
 export interface Balance {
-  userId: string;
-  lzarBalance: number;
-  zarBalance: number;
-  lockedBalance: number;
-  lastUpdated: string;
+  tokens: Array<{
+    name: string;
+    balance: string;
+  }>;
 }
 
 export interface Transaction {
   id: string;
-  fromUserId: string;
-  toUserId: string;
-  amount: number;
-  currency: 'LZAR' | 'ZAR';
-  type: 'transfer' | 'mint' | 'redeem' | 'charge' | 'reward';
+  userId: string;
+  externalId?: string;
+  txType: string;
+  method: string;
+  currency: string;
+  value: number;
   status: 'pending' | 'completed' | 'failed' | 'cancelled';
-  description?: string;
-  transactionHash?: string;
   createdAt: string;
-  completedAt?: string;
 }
 
 export interface BankAccount {
   id: string;
   userId: string;
-  bankName: string;
+  accountHolder: string;
   accountNumber: string;
-  accountType: 'checking' | 'savings';
-  isDefault: boolean;
-  isVerified: boolean;
+  branchCode: string;
+  bank: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Coupon {
   id: string;
-  merchantId: string;
+  userId: string;
   title: string;
+  imageUrl?: string;
   description: string;
-  discountAmount: number;
-  discountType: 'percentage' | 'fixed';
-  minAmount: number;
-  maxRedemptions: number;
-  currentRedemptions: number;
-  expiresAt: string;
-  isActive: boolean;
+  code: string;
+  ref: string;
+  validUntil: string;
+  maxCoupons: number;
+  availableCoupons: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Staff {
   id: string;
-  merchantId: string;
-  email: string;
   firstName: string;
   lastName: string;
-  role: 'cashier' | 'manager' | 'admin';
-  permissions: string[];
-  isActive: boolean;
+  email: string;
 }
 
 export interface ApiResponse<T> {
@@ -81,25 +78,35 @@ export interface ApiResponse<T> {
 }
 
 export interface TransferRequest {
-  toUserId: string;
-  amount: number;
-  currency: 'LZAR' | 'ZAR';
-  description?: string;
+  transactionAmount: number;
+  transactionRecipient: string;
+  transactionNotes?: string;
 }
 
 export interface ChargeRequest {
+  paymentId: string;
   amount: number;
-  currency: 'LZAR' | 'ZAR';
-  description?: string;
-  expiresAt?: string;
+  note?: string;
 }
 
 export interface MintRequest {
-  amount: number;
-  bankAccountId: string;
+  transactionAmount: number;
+  transactionRecipient?: string;
+  transactionNotes?: string;
 }
 
 export interface RedeemRequest {
+  userId: string;
   amount: number;
-  bankAccountId: string;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
 }
