@@ -1,0 +1,2979 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Rapyd Money Stablecoin API",
+    "version": "1.0.0",
+    "description": "API documentation for the ZAR Stablecoin, enabling minting, redemption, wallet management, and liquidity pool operations."
+  },
+  "servers": [
+    {
+      "url": "https://seal-app-qp9cc.ondigitalocean.app/api/v1",
+      "description": "Local server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Bearer <YOUR_API_TOKEN>"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "enabledPay": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "MEMBER",
+              "CUSTOMER"
+            ]
+          },
+          "publicKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentIdentifier": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateUserResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "GetUsersResponse": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        }
+      },
+      "GetUserResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "UpdateUserResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "DeleteUserResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "User deleted"
+          }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "txType",
+          "method",
+          "currency",
+          "value",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string",
+            "nullable": true
+          },
+          "txType": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GetUserTransactionsResponse": {
+        "type": "object",
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Transaction"
+            }
+          }
+        }
+      },
+      "GetUserTransactionResponse": {
+        "type": "object",
+        "properties": {
+          "transaction": {
+            "$ref": "#/components/schemas/Transaction"
+          }
+        }
+      },
+      "TransferResult": {
+        "type": "object",
+        "required": [
+          "message",
+          "transaction",
+          "receipt"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "transaction": {
+            "type": "object",
+            "description": "Blockchain transaction object"
+          },
+          "receipt": {
+            "type": "object",
+            "description": "Blockchain transaction receipt object"
+          }
+        }
+      },
+      "BulkTransferResult": {
+        "type": "object",
+        "required": [
+          "message",
+          "transaction",
+          "receipt"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Success message for the batch transfer"
+          },
+          "transaction": {
+            "type": "object",
+            "description": "Raw blockchain transaction object returned by sendBatchTokens",
+            "additionalProperties": true
+          },
+          "receipt": {
+            "type": "object",
+            "description": "Transaction receipt after the batch transaction is mined",
+            "additionalProperties": true
+          }
+        }
+      },
+      "RecipientDetails": {
+        "type": "object",
+        "required": [
+          "id",
+          "firstName",
+          "lastName"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "publicKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentIdentifier": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateTransactionResult": {
+        "type": "object",
+        "required": [
+          "message",
+          "transaction"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "transaction": {
+            "type": "object",
+            "description": "Newly created transaction record"
+          }
+        }
+      },
+      "BankAccountRecord": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "accountHolder",
+          "accountNumber",
+          "branchCode",
+          "bank",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "accountHolder": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "branchCode": {
+            "type": "string"
+          },
+          "bank": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MintResult": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransferResult"
+          }
+        ]
+      },
+      "ApiToken": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique token identifier"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "revoked": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "ApiTokenCreateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The newly-created token’s ID"
+          },
+          "token": {
+            "type": "string",
+            "description": "One-time API token string"
+          }
+        }
+      },
+      "ApiTokenListResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ApiToken"
+        }
+      },
+      "ApiTokenUpdateResponse": {
+        "$ref": "#/components/schemas/ApiToken"
+      },
+      "ApiTokenRevokeResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Token revoked"
+          }
+        }
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFoundResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Token not found or already revoked"
+          }
+        }
+      },
+      "FloatResponse": {
+        "type": "object",
+        "properties": {
+          "tokens": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "balance": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "PaginatedPendingTransactions": {
+        "type": "object",
+        "required": [
+          "transactions",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ],
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "userId": {
+                  "type": "string"
+                },
+                "txType": {
+                  "type": "string"
+                },
+                "method": {
+                  "type": "string"
+                },
+                "creditCurrency": {
+                  "type": "string"
+                },
+                "creditValue": {
+                  "type": "number"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "details": {
+                  "type": "object"
+                },
+                "user": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RecipientDetails"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          }
+        }
+      },
+      "VerificationResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "verification"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "verification": {
+            "type": "object",
+            "required": [
+              "id",
+              "url",
+              "host",
+              "sessionToken"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "vendorData": {
+                "type": "string",
+                "nullable": true
+              },
+              "host": {
+                "type": "string"
+              },
+              "sessionToken": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "CreateChargeParams": {
+        "type": "object",
+        "required": [
+          "paymentId",
+          "amount"
+        ],
+        "properties": {
+          "paymentId": {
+            "type": "string",
+            "description": "Unique payment identifier"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Amount to charge"
+          },
+          "note": {
+            "type": "string",
+            "description": "Optional note for the charge"
+          }
+        }
+      },
+      "ChargeRecord": {
+        "type": "object",
+        "required": [
+          "id",
+          "paymentId",
+          "amount",
+          "status",
+          "userId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Charge record UUID"
+          },
+          "paymentId": {
+            "type": "string",
+            "description": "Unique payment identifier"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "COMPLETE"
+            ]
+          },
+          "userId": {
+            "type": "string",
+            "description": "ID of the user who owns this charge"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Employee": {
+        "type": "object",
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "email"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "CouponRecord": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "title",
+          "description",
+          "code",
+          "ref",
+          "validUntil",
+          "maxCoupons",
+          "availableCoupons",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri"
+          },
+          "description": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "maxCoupons": {
+            "type": "integer"
+          },
+          "availableCoupons": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateCouponParams": {
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "code",
+          "ref",
+          "validUntil",
+          "maxCoupons",
+          "availableCoupons"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri"
+          },
+          "description": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "maxCoupons": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "availableCoupons": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ClaimCouponParams": {
+        "type": "object",
+        "required": [
+          "couponId"
+        ],
+        "properties": {
+          "couponId": {
+            "type": "string"
+          }
+        }
+      },
+      "ClaimCouponResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "transaction",
+          "receipt"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "transaction": {
+            "type": "object",
+            "description": "Blockchain transaction object"
+          },
+          "receipt": {
+            "type": "object",
+            "description": "Blockchain transaction receipt"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/activate-pay/{userId}": {
+      "post": {
+        "tags": [
+          "Make Transfers"
+        ],
+        "summary": "Enable gas payment",
+        "description": "Grants the associated user a fixed amount of gas using their API token.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the user to activate gas payment for."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gas payment activated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivatePayResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          }
+        }
+      }
+    },
+    "/tokens": {
+      "post": {
+        "tags": [
+          "Manage API Tokens"
+        ],
+        "summary": "Create API token",
+        "description": "Generates a new API token for the authenticated user and returns it once.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "description": "Optional human-friendly token description"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "New API token created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTokenCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Manage API Tokens"
+        ],
+        "summary": "List API tokens",
+        "description": "Retrieves all active (non-revoked) API tokens for the authenticated user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of token metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTokenListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          }
+        }
+      }
+    },
+    "/tokens/{id}": {
+      "patch": {
+        "tags": [
+          "Manage API Tokens"
+        ],
+        "summary": "Update token description",
+        "description": "Updates the description of a specific API token owned by the authenticated user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Unique identifier of the token"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "description": "New token description"
+                  }
+                },
+                "required": [
+                  "description"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated token metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTokenUpdateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Token not found or already revoked"
+          }
+        }
+      }
+    },
+    "/tokens/revoke": {
+      "post": {
+        "tags": [
+          "Manage API Tokens"
+        ],
+        "summary": "Revoke API token",
+        "description": "Marks a specific API token as revoked for the authenticated user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Identifier of the token to revoke"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Revocation confirmation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTokenRevokeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Token not found or already revoked"
+          }
+        }
+      }
+    },
+    "/bank/{userId}": {
+      "post": {
+        "tags": [
+          "Deposit/ Withdrawals"
+        ],
+        "summary": "Upsert bank account",
+        "description": "Creates or updates the bank account details for the specified user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the user to upsert the bank account for"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "accountHolder": {
+                    "type": "string"
+                  },
+                  "accountNumber": {
+                    "type": "string"
+                  },
+                  "branchCode": {
+                    "type": "string"
+                  },
+                  "bankName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "accountHolder",
+                  "accountNumber",
+                  "branchCode",
+                  "bankName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bank account created or updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Bank account upserted successfully"
+                    },
+                    "bankAccount": {
+                      "$ref": "#/components/schemas/BankAccountRecord"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or invalid user"
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Deposit/ Withdrawals"
+        ],
+        "summary": "Get bank account",
+        "description": "Retrieves the bank account details for the specified user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the user whose bank account to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bank account details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountRecord"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          },
+          "404": {
+            "description": "Bank account not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Deposit/ Withdrawals"
+        ],
+        "summary": "Delete bank account",
+        "description": "Deletes the bank account for the specified user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the user whose bank account to delete"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bank account deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Bank account deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          },
+          "404": {
+            "description": "Bank account not found"
+          }
+        }
+      }
+    },
+    "/charge/{userId}/create": {
+      "post": {
+        "tags": [
+          "Charges"
+        ],
+        "summary": "Create a new charge for a user",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the user to create the charge for"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChargeParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Charge created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChargeRecord"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/charge/{userId}": {
+      "get": {
+        "tags": [
+          "Charges"
+        ],
+        "summary": "Retrieve all charges for a user",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the user whose charges to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of charges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "charges": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ChargeRecord"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameter"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/retrieve-charge/{chargeId}": {
+      "get": {
+        "tags": [
+          "Charges"
+        ],
+        "summary": "Retrieve a specific charge by ID for a user",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chargeId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Charge found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChargeRecord"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Charge not found"
+          }
+        }
+      }
+    },
+    "/charge/{userId}/{chargeId}/update": {
+      "put": {
+        "tags": [
+          "Charges"
+        ],
+        "summary": "Update note or status of a charge",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "chargeId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "PENDING",
+                      "COMPLETE"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Charge updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChargeRecord"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Charge not found"
+          }
+        }
+      }
+    },
+    "/charge/{userId}/{chargeId}/delete": {
+      "delete": {
+        "tags": [
+          "Charges"
+        ],
+        "summary": "Delete a charge",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "chargeId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Charge deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Charge deleted"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/coupons": {
+      "get": {
+        "tags": [
+          "Coupons"
+        ],
+        "summary": "Get all coupons",
+        "description": "Retrieve a list of all available coupons.",
+        "responses": {
+          "200": {
+            "description": "A list of coupons",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CouponRecord"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{userId}": {
+      "post": {
+        "tags": [
+          "Coupons"
+        ],
+        "summary": "Create a new coupon",
+        "description": "Creates a new coupon for a specific user.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCouponParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Coupon created successfully"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/coupons/claim/{userId}": {
+      "patch": {
+        "tags": [
+          "Coupons"
+        ],
+        "summary": "Claim a coupon",
+        "description": "Claims and credits a coupon for the user.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "couponId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "couponId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Coupon claimed and credited"
+          },
+          "400": {
+            "description": "Claim failed or invalid"
+          }
+        }
+      }
+    },
+    "/coupons/{userId}/{couponId}": {
+      "put": {
+        "tags": [
+          "Coupons"
+        ],
+        "summary": "Update a coupon",
+        "description": "Updates a coupon if the user is the owner.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "couponId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCouponParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Coupon updated successfully"
+          },
+          "404": {
+            "description": "Coupon not found or not owned by user"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Coupons"
+        ],
+        "summary": "Delete a coupon",
+        "description": "Deletes a coupon if the user is the owner.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "couponId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Coupon deleted successfully"
+          },
+          "404": {
+            "description": "Coupon not found or not owned by user"
+          }
+        }
+      }
+    },
+    "/create-transaction/{userId}": {
+      "post": {
+        "tags": [
+          "Deposit/ Withdrawals"
+        ],
+        "summary": "Create transaction for user",
+        "description": "Records a new transaction for the specified user by ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the user for whom to create the transaction"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionType": {
+                    "type": "string"
+                  },
+                  "transactionMethod": {
+                    "type": "string"
+                  },
+                  "transactionCurrency": {
+                    "type": "string"
+                  },
+                  "transactionAmount": {
+                    "type": "number"
+                  },
+                  "transactionNetwork": {
+                    "type": "string"
+                  },
+                  "transactionAddress": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "transactionType",
+                  "transactionMethod",
+                  "transactionCurrency",
+                  "transactionAmount"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Newly created transaction record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTransactionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          }
+        }
+      }
+    },
+    "/float": {
+      "get": {
+        "tags": [
+          "Business Management"
+        ],
+        "summary": "Get token balances",
+        "description": "Retrieves the current token balances for the user associated with the provided API token.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of token balances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloatResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          }
+        }
+      }
+    },
+    "/enable-gas": {
+      "post": {
+        "tags": [
+          "Business Management"
+        ],
+        "summary": "Enable gas",
+        "description": "Allocates a predefined amount of gas to the user linked with the provided API token.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gas allocation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnableGasResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          }
+        }
+      }
+    },
+    "/mint": {
+      "post": {
+        "tags": [
+          "Business Management"
+        ],
+        "summary": "Mint stablecoins",
+        "description": "Creates new stablecoin tokens in the authenticated user’s account and optionally logs a mint note or referral.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionAmount": {
+                    "type": "number",
+                    "description": "Amount of tokens to mint (must be positive)"
+                  },
+                  "transactionRecipient": {
+                    "type": "string",
+                    "description": "Referral code or identifier of the recipient"
+                  },
+                  "transactionNotes": {
+                    "type": "string",
+                    "description": "Optional notes for the mint operation"
+                  }
+                },
+                "required": [
+                  "transactionAmount"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mint operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MintResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (e.g., negative amount)"
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          }
+        }
+      }
+    },
+    "/transactions/pending": {
+      "get": {
+        "tags": [
+          "Business Management"
+        ],
+        "summary": "List pending transactions",
+        "description": "Returns a paginated list of all pending transactions for the user tied to the provided API token.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Page number to retrieve (starts at 1)"
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Number of transactions to return per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated set of pending transactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedPendingTransactions"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters (e.g., non-positive values)"
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          }
+        }
+      }
+    },
+    "/recipient/{id}": {
+      "get": {
+        "tags": [
+          "Make Transfers"
+        ],
+        "summary": "Fetch recipient details",
+        "description": "Retrieves user information (and sub-accounts if merchant) by payment identifier or email.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Payment identifier or email of the user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recipient user details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipientDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identifier provided"
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          },
+          "404": {
+            "description": "Recipient not found"
+          }
+        }
+      }
+    },
+    "/redeem": {
+      "post": {
+        "summary": "Redeem LZAR",
+        "description": "Redeems the specified amount of LZAR for the user.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "description": "The ID of the user.",
+                    "example": "60d21b4667d0d8992e610c85"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "description": "The amount of LZAR to redeem.",
+                    "example": 100.5
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "LZAR redeemed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "transactionId": {
+                      "type": "string",
+                      "description": "The ID of the redemption transaction.",
+                      "example": "60d21b4667d0d8992e610c85"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/staff/{userId}": {
+      "get": {
+        "tags": [
+          "Staff"
+        ],
+        "summary": "List all employees of a merchant",
+        "description": "Returns all users with role EMPLOYEE whose employerId matches the given merchant ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the merchant"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of employee objects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Employee"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Staff"
+        ],
+        "summary": "Assign an existing user as an employee",
+        "description": "Finds a user by email or referral code and sets their role to EMPLOYEE under the given merchant.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the merchant"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Employee successfully assigned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing input or cannot assign merchant"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      }
+    },
+    "/staff/{userId}/{id}": {
+      "delete": {
+        "tags": [
+          "Staff"
+        ],
+        "summary": "Remove an employee from a merchant",
+        "description": "Resets the specified employee’s role to PERSONAL and clears their employerId.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the merchant"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the employee to remove"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Employee successfully removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Employee not found or unauthorized"
+          }
+        }
+      }
+    },
+    "/{userId}/balance": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Get user token balances",
+        "description": "Retrieves the token balances for a specific user by their ID, useful for admin or cross-user queries.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the user to fetch balances for"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token balances for the user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloatResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid userId parameter"
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          },
+          "404": {
+            "description": "User not found or public key missing"
+          }
+        }
+      }
+    },
+    "/{userId}/transactions": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "List user transactions",
+        "description": "Retrieves all transactions for a specific user, including external identifiers.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the user whose transactions to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of transaction records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "transactions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Transaction"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid userId parameter"
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          }
+        }
+      }
+    },
+    "/{userId}/transactions/{transactionId}": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Get single transaction",
+        "description": "Fetches a specific transaction by ID for the given user.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the user"
+          },
+          {
+            "in": "path",
+            "name": "transactionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the transaction to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          },
+          "404": {
+            "description": "Transaction not found"
+          }
+        }
+      }
+    },
+    "/transfer/{userId}": {
+      "post": {
+        "tags": [
+          "Make Transfers"
+        ],
+        "summary": "Transfer stablecoins for user",
+        "description": "Transfers stablecoin tokens from the specified user’s account to the given recipient, with optional notes.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the user initiating the transfer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionAmount": {
+                    "type": "number",
+                    "description": "Amount to transfer (must be a positive number)"
+                  },
+                  "transactionRecipient": {
+                    "type": "string",
+                    "description": "Referral code or identifier of the recipient"
+                  },
+                  "transactionNotes": {
+                    "type": "string",
+                    "description": "Optional notes or memo for the transaction"
+                  }
+                },
+                "required": [
+                  "transactionAmount",
+                  "transactionRecipient"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transfer executed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or validation error"
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          }
+        }
+      }
+    },
+    "/transfer/batch/{userId}": {
+      "post": {
+        "tags": [
+          "Make Transfers"
+        ],
+        "summary": "Bulk transfer stablecoins for user",
+        "description": "Executes a batch stablecoin payment from the specified user's account to multiple recipients.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the user initiating the bulk transfer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "payments": {
+                    "type": "array",
+                    "description": "List of payment objects",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "recipient": {
+                          "type": "string",
+                          "description": "Payment identifier of the recipient"
+                        },
+                        "amount": {
+                          "type": "number",
+                          "description": "Amount to transfer (must be a positive number)"
+                        }
+                      },
+                      "required": [
+                        "recipient",
+                        "amount"
+                      ]
+                    }
+                  },
+                  "transactionNotes": {
+                    "type": "string",
+                    "description": "Optional notes or memo for the batch transfer"
+                  }
+                },
+                "required": [
+                  "payments"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch transfer executed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkTransferResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or validation error"
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid API token)"
+          }
+        }
+      }
+    },
+    "/users": {
+      "post": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Create user",
+        "description": "Creates a new user tied to the authenticated API token.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "firstName",
+                  "lastName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created user object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "List users",
+        "description": "Retrieves all users associated with the authenticated business.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of user objects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "users": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Get user",
+        "description": "Fetches a single user by ID for the authenticated business.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User's unique identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Requested user object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID parameter"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Update user",
+        "description": "Updates user details for the specified ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User's unique identifier"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "imageUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated user object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Delete user",
+        "description": "Deletes the user with the given ID from the authenticated business.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User's unique identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deletion confirmation message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User deleted"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID parameter"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/verification/{userId}": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Create a new document verification session for a given user",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the user to start verification for"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Verification session created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid userId parameter"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/verification/{sessionId}/status": {
+      "get": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Get the status of a verification session",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the verification session"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current session status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid session ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Session not found"
+          }
+        }
+      }
+    },
+    "/verification/{sessionId}/image": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Upload a document or selfie image for verification",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the verification session"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadVerificationImageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Image uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Image uploaded"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Session not found"
+          }
+        }
+      }
+    },
+    "/verification/{sessionId}/submit": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Submit the verification session for processing",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the verification session"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification session submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation Error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Session not found"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Manage API Tokens",
+      "description": "The `tokens` endpoint allows you to securely generate, manage, and revoke API access credentials for your platform.\n\nCommon use cases include:\n- Creating a new API token with an optional description\n- Listing all active (non-revoked) tokens linked to your account\n- Updating token metadata (e.g. description)\n- Revoking tokens that are no longer needed or may have been compromised"
+    },
+    {
+      "name": "User Management",
+      "description": "The `user` endpoint allows you to create, view, update, and remove users associated with your platform.\n\nCommon use cases include:\n- Creating a new user profile linked to your business\n- Retrieving a list of all users or fetching a specific user by ID\n- Updating user details like name, email, or profile image\n- Deleting users that are no longer active or needed"
+    },
+    {
+      "name": "Business Management",
+      "description": "The `Business Management` endpoint enables your platform to mint stablecoins, manage float balances, and view pending transactions.\n\nCommon use cases include:\n- Minting LZAR tokens to your platform account with optional notes or referral IDs\n- Viewing available token balances (float) for issuing payments\n- Allocating gas for user wallets\n- Listing pending transactions for review or approval"
+    },
+    {
+      "name": "Make Transfers",
+      "description": "The `transfers` endpoint allows users to send stablecoins to each other securely and instantly.\n\nCommon use cases include:\n- Initiating peer-to-peer stablecoin transfers between two users\n- Moving tokens between user wallets for internal platform operations\n- Triggering programmatic transfers for payouts, settlements, or reimbursements"
+    },
+    {
+      "name": "Deposit/Withdrawals",
+      "description": "The `deposit/withdrawals` endpoint allows you to manage a user's linked bank account and initiate deposit or withdrawal transactions.\n\nCommon use cases include:\n- Creating or updating bank account details (account number, holder, bank name, etc.)\n- Retrieving stored bank account info for user verification or display\n- Deleting a user’s bank account on request\n- Creating a deposit or withdrawal transaction linked to the user's bank"
+    },
+    {
+      "name": "Transactions",
+      "description": "The `transactions` endpoint allows you to retrieve a user's payment history and view individual receipts.\n\nCommon use cases include:\n- Fetching a user's token balances for internal or admin dashboards\n- Listing all transactions made by a specific user\n- Viewing detailed information for a specific transaction, including type, method, value, and status"
+    },
+    {
+      "name": "Verification",
+      "description": "The `verification` endpoint enables Know Your Customer (KYC) flows for your platform.\n\nCommon use cases include:\n- Creating a document verification session for a user\n- Uploading ID documents or selfies for verification\n- Checking the real-time status of a verification session\n- Submitting a session for processing by a verification vendor"
+    },
+    {
+      "name": "Charges",
+      "description": "The Charges endpoint lets you create a payment request that others can pay.\n\nCommon use cases include:\n- Businesses creating payment links for customer transactions\n- Individuals receiving peer-to-peer payments using a shareable link\n- Tracking the real-time status of a payment"
+    },
+    {
+      "name": "Staff",
+      "description": "The `staff` endpoint allows you to assign users to a business as staff members.\n\nCommon use cases include:\n- Tipping: Create one-off payments to staff members\n- Payroll: Create batch payments for monthly salaries\n- HR: Assign and manage staff within an organization"
+    },
+    {
+      "name": "Coupons",
+      "description": "The `coupons` endpoint allows businesses to issue and manage promotional discounts.\n\nCommon use cases include:\n- Creating discount codes that vendors can share with customers\n- Tracking coupon usage (e.g. claimed vs unclaimed)\n- Setting up and funding a pool to cover coupon redemptions"
+    }
+  ]
+}
