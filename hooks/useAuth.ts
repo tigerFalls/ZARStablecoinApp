@@ -70,8 +70,6 @@ export const useAuthProvider = () => {
         } else {
           setProfile(null);
         }
-        
-        setIsLoading(false);
       });
 
       // Cleanup subscription on unmount
