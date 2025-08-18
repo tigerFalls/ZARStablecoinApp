@@ -24,7 +24,7 @@ const createSupabaseClient = () => {
         update: () => ({ eq: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }) }) }) }),
       }),
       rpc: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }),
-    };
+    } as any;
   }
 
   return createClient(supabaseUrl, supabaseAnonKey, {
@@ -37,7 +37,7 @@ const createSupabaseClient = () => {
   });
 };
 
-
+export const supabase = createSupabaseClient();
 // Database types
 export interface Profile {
   id: string;
