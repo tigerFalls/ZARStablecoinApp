@@ -39,6 +39,15 @@ const createSupabaseClient = () => {
 
 export const supabase = createSupabaseClient() as any;
 
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});
+
 // Database types
 export interface Profile {
   id: string;
