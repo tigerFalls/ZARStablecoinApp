@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Mail, User } from 'lucide-react-native';
+import { Mail, User, Lock } from 'lucide-react-native';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +13,8 @@ export default function RegisterScreen() {
     firstName: '',
     lastName: '',
     email: '',
+    password: '',
+    confirmPassword: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -34,6 +36,18 @@ export default function RegisterScreen() {
       newErrors.email = 'Please enter a valid email';
     }
 
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
     if (!acceptedTerms) {
       newErrors.terms = 'You must accept the terms and conditions';
     }
@@ -50,19 +64,21 @@ export default function RegisterScreen() {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.toLowerCase().trim(),
+        password: formData.password,
       });
 
       if (result.success) {
         Alert.alert(
           'Registration Successful',
-          'Your account has been created successfully! You can now sign in.',
+          'Your account has been created successfully! Please check your email to verify your account, then you can sign in.',
           [{ text: 'OK', onPress: () => router.push('/auth/login') }]
         );
       } else {
-        Alert.alert('Registration Failed', 'Unable to create account. Please try again.');
+        Alert.alert('Registration Failed', result.error || 'Unable to create account. Please try again.');
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred during registration. Please try again.');
+      console.error('Registration error:', error);
+      Alert.alert('Error', 'An unexpected error occurred during registration. Please try again.');
     }
   };
 
@@ -78,7 +94,11 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -120,6 +140,26 @@ export default function RegisterScreen() {
             error={errors.email}
           />
 
+          <Input
+            label="Password"
+            placeholder="Enter your password"
+            value={formData.password}
+            onChangeText={(value) => updateFormData('password', value)}
+            isPassword
+            leftIcon={<Lock size={20} color="#9CA3AF" />}
+            error={errors.password}
+          />
+
+          <Input
+            label="Confirm Password"
+            placeholder="Confirm your password"
+            value={formData.confirmPassword}
+            onChangeText={(value) => updateFormData('confirmPassword', value)}
+            isPassword
+            leftIcon={<Lock size={20} color="#9CA3AF" />}
+            error={errors.confirmPassword}
+          />
+
           <TouchableOpacity
             style={styles.termsContainer}
             onPress={() => setAcceptedTerms(!acceptedTerms)}
@@ -151,7 +191,8 @@ export default function RegisterScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 

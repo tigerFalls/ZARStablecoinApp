@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Mail, Lock } from 'lucide-react-native';
 import { Input } from '@/components/ui/Input';
@@ -8,10 +8,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { router } from 'expo-router';
 
 export default function LoginScreen() {
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, resetPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -36,19 +37,49 @@ export default function LoginScreen() {
     if (!validateForm()) return;
 
     try {
-      const success = await login(email, password);
-      if (success) {
+      const result = await login({ email: email.toLowerCase().trim(), password });
+      
+      if (result.success) {
         router.replace('/(tabs)');
       } else {
-        Alert.alert('Login Failed', 'Unable to authenticate. Please check your credentials and try again.');
+        Alert.alert('Login Failed', result.error || 'Unable to authenticate. Please check your credentials and try again.');
       }
     } catch (error) {
-      Alert.alert('Error', `Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Login error:', error);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     }
   };
 
-  const handleForgotPassword = () => {
-    router.push('/auth/forgot-password');
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert('Email Required', 'Please enter your email address first.');
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+
+    try {
+      setIsResettingPassword(true);
+      const result = await resetPassword(email.toLowerCase().trim());
+      
+      if (result.success) {
+        Alert.alert(
+          'Reset Email Sent',
+          'Please check your email for password reset instructions.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Reset Failed', result.error || 'Unable to send reset email. Please try again.');
+      }
+    } catch (error) {
+      console.error('Reset password error:', error);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsResettingPassword(false);
+    }
   };
 
   const handleSignUp = () => {
@@ -56,7 +87,11 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       
       <View style={styles.content}>
@@ -87,8 +122,14 @@ export default function LoginScreen() {
             error={errors.password}
           />
 
-          <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotPassword}>
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          <TouchableOpacity 
+            onPress={handleForgotPassword} 
+            style={styles.forgotPassword}
+            disabled={isResettingPassword}
+          >
+            <Text style={[styles.forgotPasswordText, isResettingPassword && styles.disabledText]}>
+              {isResettingPassword ? 'Sending...' : 'Forgot Password?'}
+            </Text>
           </TouchableOpacity>
 
           <Button
@@ -106,7 +147,8 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -163,5 +205,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6366F1',
     fontWeight: '600',
+  },
+  disabledText: {
+    opacity: 0.5,
   },
 });

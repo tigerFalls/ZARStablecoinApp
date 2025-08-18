@@ -1,16 +1,19 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiService } from '@/services/api';
-import { User, CreateUserRequest } from '@/types/api';
+import { User, Session } from '@supabase/supabase-js';
+import { authService, RegisterData, LoginData } from '@/services/authService';
+import { Profile } from '@/services/supabase';
 
 interface AuthContextType {
   user: User | null;
+  profile: Profile | null;
+  session: Session | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (userData: CreateUserRequest) => Promise<{ success: boolean; user?: User }>;
+  login: (data: LoginData) => Promise<{ success: boolean; error?: string }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-  updateUser: (userData: Partial<User>) => void;
+  updateProfile: (updates: Partial<Pick<Profile, 'firstName' | 'lastName'>>) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,61 +28,96 @@ export const useAuth = () => {
 
 export const useAuthProvider = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    checkAuthStatus();
+    initializeAuth();
   }, []);
 
-  const checkAuthStatus = async () => {
+  const initializeAuth = async () => {
     try {
-      const token = await AsyncStorage.getItem('auth_token');
-      const userId = await AsyncStorage.getItem('user_id');
+      setIsLoading(true);
       
-      if (token && userId) {
-        const user = await apiService.getProfile(userId);
-        setUser(user);
+      // Get current session
+      const { session: currentSession, error } = await authService.getSession();
+      
+      if (error) {
+        console.error('Error getting session:', error);
+        return;
       }
+
+      if (currentSession?.user) {
+        setSession(currentSession);
+        setUser(currentSession.user);
+        
+        // Get user profile
+        const userProfile = await authService.getProfile(currentSession.user.id);
+        setProfile(userProfile);
+      }
+
+      // Listen for auth changes
+      const { data: { subscription } } = authService.onAuthStateChange(async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          const userProfile = await authService.getProfile(session.user.id);
+          setProfile(userProfile);
+        } else {
+          setProfile(null);
+        }
+        
+        setIsLoading(false);
+      });
+
+      // Cleanup subscription on unmount
+      return () => {
+        subscription.unsubscribe();
+      };
     } catch (error) {
-      console.error('Auth check failed:', error);
-      await logout();
+      console.error('Auth initialization error:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (data: LoginData): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsLoading(true);
-      const { user, token } = await apiService.login(email, password);
+      const result = await authService.login(data);
       
-      if (user && token) {
-        setUser(user);
-        return true;
+      if (result.error) {
+        return { success: false, error: result.error };
       }
-      return false;
+      
+      // State will be updated by the auth state change listener
+      return { success: true };
     } catch (error) {
-      console.error('Login failed:', error);
-      return false;
+      console.error('Login error:', error);
+      return { success: false, error: 'An unexpected error occurred during login' };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (userData: CreateUserRequest): Promise<{ success: boolean; user?: User }> => {
+  const register = async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsLoading(true);
-      const user = await apiService.register(userData);
+      const result = await authService.register(data);
       
-      if (user) {
-        // Store user ID for potential future login
-        await AsyncStorage.setItem('user_id', user.id);
-        return { success: true, user };
+      if (result.error) {
+        return { success: false, error: result.error };
       }
-      return { success: false };
+      
+      // State will be updated by the auth state change listener
+      return { success: true };
     } catch (error) {
-      console.error('Registration failed:', error);
-      return { success: false };
+      console.error('Registration error:', error);
+      return { success: false, error: 'An unexpected error occurred during registration' };
     } finally {
       setIsLoading(false);
     }
@@ -87,27 +125,70 @@ export const useAuthProvider = () => {
 
   const logout = async () => {
     try {
-      await apiService.logout();
-      setUser(null);
+      setIsLoading(true);
+      const { error } = await authService.logout();
+      
+      if (error) {
+        console.error('Logout error:', error);
+      }
+      
+      // State will be updated by the auth state change listener
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('Logout error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const updateUser = (userData: Partial<User>) => {
-    if (user) {
-      setUser({ ...user, ...userData });
+  const updateProfile = async (updates: Partial<Pick<Profile, 'firstName' | 'lastName'>>): Promise<{ success: boolean; error?: string }> => {
+    try {
+      if (!user) {
+        return { success: false, error: 'No user logged in' };
+      }
+
+      const result = await authService.updateProfile(user.id, updates);
+      
+      if (result.error) {
+        return { success: false, error: result.error };
+      }
+      
+      if (result.profile) {
+        setProfile(result.profile);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Update profile error:', error);
+      return { success: false, error: 'An unexpected error occurred while updating profile' };
+    }
+  };
+
+  const resetPassword = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await authService.resetPassword(email);
+      
+      if (error) {
+        return { success: false, error };
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return { success: false, error: 'An unexpected error occurred while resetting password' };
     }
   };
 
   return {
     user,
+    profile,
+    session,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !!session,
     login,
     register,
     logout,
-    updateUser,
+    updateProfile,
+    resetPassword,
   };
 };
 
