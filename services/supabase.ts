@@ -38,7 +38,6 @@ const createSupabaseClient = () => {
 };
 
 export const supabase = createSupabaseClient() as any;
-}
 
 // Database types
 export interface Profile {
