@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Plus, Bell } from 'lucide-react-native';
 import { BalanceCard } from '@/components/wallet/BalanceCard';
@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { router } from 'expo-router';
 
 export default function HomeScreen() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { balance, transactions, isLoading, isRefreshing, refreshWallet } = useWallet();
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
@@ -23,7 +23,7 @@ export default function HomeScreen() {
   };
 
   const handleScan = () => {
-    router.push('/scan');
+    router.push('/(tabs)/scan');
   };
 
   const handleRewards = () => {
@@ -46,6 +46,16 @@ export default function HomeScreen() {
     router.push('/notifications');
   };
 
+  const getUserDisplayName = () => {
+    if (profile?.firstName) {
+      return profile.firstName;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'User';
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
@@ -53,7 +63,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Good morning</Text>
-          <Text style={styles.userName}>{user?.firstName || 'User'}</Text>
+          <Text style={styles.userName}>{getUserDisplayName()}</Text>
         </View>
         <TouchableOpacity style={styles.notificationButton} onPress={handleNotifications}>
           <Bell size={24} color="#F3F4F6" />
@@ -97,7 +107,7 @@ export default function HomeScreen() {
         {transactions.length > 5 && (
           <TouchableOpacity 
             style={styles.viewAllButton}
-            onPress={() => router.push('/history')}
+            onPress={() => router.push('/(tabs)/history')}
           >
             <Text style={styles.viewAllText}>View All Transactions</Text>
           </TouchableOpacity>

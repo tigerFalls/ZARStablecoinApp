@@ -9,6 +9,8 @@ export const useWallet = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreTransactions, setHasMoreTransactions] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -23,7 +25,7 @@ export const useWallet = () => {
       setIsLoading(true);
       await Promise.all([
         loadBalance(),
-        loadTransactions(),
+        loadTransactions(1, true),
       ]);
     } catch (error) {
       console.error('Failed to load wallet data:', error);
@@ -43,12 +45,21 @@ export const useWallet = () => {
     }
   };
 
-  const loadTransactions = async () => {
+  const loadTransactions = async (page = 1, reset = false) => {
     if (!user) return;
     
     try {
-      const response = await apiService.getTransactions(user.id);
-      setTransactions(response.transactions || []);
+      const response = await apiService.getTransactions(user.id, page);
+      
+      if (reset) {
+        setTransactions(response.transactions);
+        setCurrentPage(1);
+      } else {
+        setTransactions(prev => [...prev, ...response.transactions]);
+      }
+      
+      setHasMoreTransactions(response.hasMore);
+      setCurrentPage(page);
     } catch (error) {
       console.error('Failed to load transactions:', error);
     }
@@ -70,7 +81,10 @@ export const useWallet = () => {
         transactionNotes: notes,
       });
       
-      await refreshWallet();
+      if (result.success) {
+        await refreshWallet();
+      }
+      
       return result;
     } catch (error) {
       console.error('Send money failed:', error);
@@ -105,7 +119,10 @@ export const useWallet = () => {
         transactionNotes: notes,
       });
       
-      await refreshWallet();
+      if (result.success) {
+        await refreshWallet();
+      }
+      
       return result;
     } catch (error) {
       console.error('Mint tokens failed:', error);
@@ -122,7 +139,10 @@ export const useWallet = () => {
         amount,
       });
       
-      await refreshWallet();
+      if (result.success) {
+        await refreshWallet();
+      }
+      
       return result;
     } catch (error) {
       console.error('Redeem tokens failed:', error);
@@ -135,8 +155,10 @@ export const useWallet = () => {
     transactions,
     isLoading,
     isRefreshing,
+    hasMoreTransactions,
     loadWalletData,
     refreshWallet,
+    loadTransactions: (page?: number) => loadTransactions(page || currentPage + 1, false),
     sendMoney,
     createPaymentRequest,
     mintTokens,
